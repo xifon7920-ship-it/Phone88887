@@ -1,0 +1,55 @@
+-- [[ UNIVERSAL DEATH WARP & CLEAN RESPAWN - V.22 ]] --
+local player = game:GetService("Players").LocalPlayer
+local starterGui = game:GetService("StarterGui")
+local deathPos = nil
+-- 1. แจ้งเตือนเมื่อรันสคริปต์ (ใช้ได้ทุกแมพ)
+starterGui:SetCore("SendNotification", {
+Title = "Script Status",
+Text = "ระบบเกิดจุดเดิม (Universal) พร้อมทำงาน!",
+Duration = 5,
+Button1 = "OK"
+})
+-- ฟังก์ชันตรวจจับการตายและเก็บพิกัด
+local function setupDetection(character)
+local humanoid = character:WaitForChild("Humanoid")
+local rootPart = character:WaitForChild("HumanoidRootPart")
+humanoid.Died:Connect(function()
+-- บันทึกพิกัดก่อนตัวละครจะหายไป
+deathPos = rootPart.CFrame
+print("📍 บันทึกพิกัดจุดตายเรียบร้อย")
+end)
+end
+-- ฟังก์ชันจัดการตอนเกิดใหม่
+player.CharacterAdded:Connect(function(character)
+local hrp = character:WaitForChild("HumanoidRootPart", 10)
+if deathPos and hrp then
+-- วาร์ปไปจุดตายทันที (ย้ำ 5 ครั้งเพื่อความชัวร์ในแมพที่ชอบดึงตัวกลับ)
+task.spawn(function()
+for i = 1, 5 do
+hrp.CFrame = deathPos
+task.wait()
+end
+end)
+-- ลบ "ForceField" หรือไอ้ระยิบระยับที่ติดตัวละครออก (ทำให้เนียนทุกแมพ)
+task.spawn(function()
+-- วนลูปหาจนกว่าจะเจอแล้วลบทิ้ง
+local ffFound = false
+for i = 1, 100 do
+local ff = character:FindFirstChildOfClass("ForceField")
+if ff then
+ff:Destroy()
+ffFound = true
+break
+end
+task.wait(0.01)
+end
+end)
+end
+-- ตั้งค่าตรวจจับครั้งต่อไป
+setupDetection(character)
+end)
+-- รันครั้งแรก
+if player.Character then
+setupDetection(player.Character)
+end
+print("✅ Universal Death Warp V.22 Active!")
